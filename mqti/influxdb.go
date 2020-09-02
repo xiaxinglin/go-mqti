@@ -69,7 +69,8 @@ func (i InfluxDBConnection) Forward(m *MQTTMessage) error {
 		tags = make(map[string]string)
 	}
 
-	fields, err = m.PayloadAsJSON()
+	fields, tags, err = m.PayloadAsFieldsAndTags()
+    //    fields = fields["twin"]["temperature-status"]["actual"]
 	if err == nil {
 		mungers := m.MappingConfiguration.InfluxDB.Mungers
 		if err = i.applyMungers(mungers, fields, tags); err != nil {

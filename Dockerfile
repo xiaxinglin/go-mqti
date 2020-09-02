@@ -1,11 +1,12 @@
-FROM alpine
-MAINTAINER Ash McKenzie <ash@the-rebellion.net>
+FROM golang:1.12-alpine3.10 AS builder
 
-RUN apk --update add bash curl
+COPY . /go/src/github.com/
 
-RUN mkdir /app
-WORKDIR /app
+RUN CGO_ENABLED=0 go build -v -o /usr/local/bin/mqti  -ldflags="-w -s" /go/src/github.com/mqti/cmd/main.go
 
-RUN curl -L https://github.com/ashmckenzie/go-mqti/releases/download/v0.1.1/mqti_linux_v0.1.1 > mqti && chmod 755 mqti
+FROM alpine:3.9
 
-CMD ["/app/mqti", "forward"]
+
+COPY --from=builder /usr/local/bin/mqti /usr/local/bin/mqti
+
+CMD ["mqti", "forward"]

@@ -35,6 +35,38 @@ func (m MQTTMessage) PayloadAsJSON() (map[string]interface{}, error) {
 	return fields, err
 }
 
+// PayloadAsFieldsAndTags ...
+func (m MQTTMessage) PayloadAsFieldsAndTags() (map[string]interface{}, map[string]string, error) {
+	var fieldsAll map[string]interface{}
+	fieldsLast := make(map[string]interface{})
+	tags := make(map[string]string)
+
+	err := json.Unmarshal(m.Payload(), &fieldsAll)
+	fieldsTwin, ok := fieldsAll["twin"].(map[string]interface{})
+	if !ok {
+		return nil, nil, err
+	}
+
+	for key, value := range fieldsTwin {
+		valueKey := key
+		for subKeyC, subValC := range value.(map[string]interface{}) {
+			if subKeyC == "actual"{
+				for subKey, subVal := range subValC.(map[string]interface{}){
+					if subKey == "value"{
+						fieldsLast[valueKey] = subVal
+					}
+				}
+			}
+			if subKeyC == "metadata" {
+				for subKeyD, subValD := range subValC.(map[string]interface{}){
+					tags[subKeyD] = subValD.(string)
+				}
+			}
+		}
+	}
+	return fieldsLast, tags, err
+}
+
 func (m MQTTMessage) jSONFilterShouldSkip(j map[string]interface{}, f []map[string]string, invert bool) bool {
 	skip := false
 
@@ -154,10 +186,10 @@ func MQTTSubscribe(incoming chan *MQTTMessage) {
 	opts.Username = mQTTUsername()
 	opts.Password = mQTTPassword()
 	opts.CleanSession = mQTTCleanSession()
-	opts.TLSConfig = tls.Config{}
+	opts.TLSConfig = &tls.Config{}
 
 	if mQTTTLSDefined() {
-		opts.TLSConfig = mQTTTLSConfig()
+		*opts.TLSConfig = mQTTTLSConfig()
 	}
 
 	opts.AddBroker(mQTTBrokerURI())

@@ -6,7 +6,7 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	MQTT "github.com/eclipse/paho.mqtt.golang"
 )
 
